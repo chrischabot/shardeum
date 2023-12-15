@@ -5773,7 +5773,7 @@ const shardusSetup = (): void => {
             version
           )
         ) {
-          const tag = 'config mismatch; needs to update and restart'
+          const tag = 'version out-of-date; please update and restart'
           const message =
             'node version is out-of-date; please update node to latest version'
           shardus.shutdownFromDapp(tag, message, false)
