@@ -196,6 +196,8 @@ export let adminCert: AdminCert = null
 
 const uuidCounter = 1
 
+let initialNetworkAccount: WrappedAccount
+
 function isDebugMode(): boolean {
   return config.server.mode === 'debug'
 }
@@ -5762,6 +5764,39 @@ const shardusSetup = (): void => {
       activeNodes: P2P.P2PTypes.Node[],
       mode: P2P.ModesTypes.Record['mode']
     ): Promise<boolean> {
+      const networkAccount = await fetchNetworkAccountFromArchiver()
+
+      console.log('before versions check')
+      if (initialNetworkParamters && networkAccount) {
+        console.log('isReadyToJoin: is not null')
+        console.dir(networkAccount, { depth: null })
+        console.dir(initialNetworkParamters, { depth: null })
+        console.log(
+          `initialNetworkAccount.data.current.minVersion: ${networkAccount.data.current.minVersion}`
+        )
+
+        console.log(`initialNetworkParamters.minVersion: ${initialNetworkParamters.minVersion}`)
+        console.log(
+          `initialNetworkAccount.data.current.latestVersion: ${networkAccount.data.current.latestVersion}`
+        )
+        console.log(`initialNetworkParamters.latestVersion: ${initialNetworkParamters.latestVersion}`)
+
+        if (
+          networkAccount.data.current.minVersion > initialNetworkParamters.minVersion ||
+          networkAccount.data.current.latestVersion !== initialNetworkParamters.latestVersion
+        ) {
+          const tag = 'config mismatch; needs to update and restart'
+          const message =
+            'latestVersion and/or minVersion is out-of-date; please update node to latest version'
+          console.log('inside shutdown')
+          //shardus.shutdownFromDapp(tag, message, false)
+        } else {
+          console.log('no shutdown!!!')
+        }
+      } else {
+        console.log('isReadyToJoin: is null')
+      }
+
       isReadyToJoinLatestValue = false
       mustUseAdminCert = false
 
@@ -6385,13 +6420,14 @@ export function shardeumGetTime(): number {
   //use patchedConfig instead of config below
 
   let configToLoad
+
   try {
     // Attempt to get and patch config. Error if unable to get config.
-    const networkAccount = await fetchNetworkAccountFromArchiver()
-    console.log('Network Account', networkAccount)
-    AccountsStorage.setCachedNetworkAccount(networkAccount.data)
+    initialNetworkAccount = await fetchNetworkAccountFromArchiver()
+    console.log('Network Account', initialNetworkAccount)
+    AccountsStorage.setCachedNetworkAccount(initialNetworkAccount.data)
 
-    configToLoad = await updateConfigFromNetworkAccount(config, networkAccount)
+    configToLoad = await updateConfigFromNetworkAccount(config, initialNetworkAccount)
   } catch (error) {
     configToLoad = config
     /* prettier-ignore */ nestedCountersInstance.countEvent('network-config-operation', 'Error: Use default configs.')
