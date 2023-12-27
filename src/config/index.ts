@@ -122,6 +122,7 @@ config = merge(config, {
     p2p: {
       cycleDuration: 60,
       minNodesToAllowTxs: 1, // to allow single node networks
+      minBaselineNodes: process.env.minBaselineNodes ? parseInt(process.env.minBaselineNodes) : 300,
       minNodes: process.env.minNodes ? parseInt(process.env.minNodes) : 300,
       maxNodes: process.env.maxNodes ? parseInt(process.env.maxNodes) : 1100,
       maxJoinedPerCycle: 10,
