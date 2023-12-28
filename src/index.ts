@@ -5460,9 +5460,9 @@ const shardusSetup = (): void => {
       data,
       mode: P2P.ModesTypes.Record['mode'] | null,
       latestCycle: ShardusTypes.Cycle,
-      minBaselineNodes: number
+      minNodes: number
     ) {
-      /* prettier-ignore */ if (ShardeumFlags.VerboseLogs) console.log(`validateJoinRequest minBaselineNodes: ${minBaselineNodes}, active: ${latestCycle.active}, syncing ${latestCycle.syncing}, mode: ${mode}, flag: ${ShardeumFlags.AdminCertEnabled}`)
+      /* prettier-ignore */ if (ShardeumFlags.VerboseLogs) console.log(`validateJoinRequest minNodes: ${minNodes}, active: ${latestCycle.active}, syncing ${latestCycle.syncing}, mode: ${mode}, flag: ${ShardeumFlags.AdminCertEnabled}`)
 
       try {
         /* prettier-ignore */ if (ShardeumFlags.VerboseLogs) console.log(`validateJoinRequest ${stringify(data)}`)
@@ -5570,7 +5570,7 @@ const shardusSetup = (): void => {
           stakingEnabled &&
           ShardeumFlags.AdminCertEnabled === true &&
           mode !== 'processing' &&
-          numTotalNodes < minBaselineNodes //if node is about to enter processing check for stake as expected not admin cert
+          numTotalNodes < minNodes //if node is about to enter processing check for stake as expected not admin cert
         ) {
           const adminCert: AdminCert = appJoinData.adminCert
           /* prettier-ignore */ nestedCountersInstance.countEvent('shardeum-mode', 'validateJoinRequest: mode is not processing, AdminCertEnabled enabled, node about to enter processing check')
