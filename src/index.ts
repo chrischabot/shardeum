@@ -5815,7 +5815,11 @@ const shardusSetup = (): void => {
 
       isReadyToJoinLatestValue = false
       mustUseAdminCert = false
-
+      if (adminCert && !ShardeumFlags.AdminCertEnabled) {
+        /* prettier-ignore */
+        nestedCountersInstance.countEvent('adminCert', 'adminCertPresentButNotUsed');
+        if (ShardeumFlags.VerboseLogs) console.log(`validateJoinRequest: AdminCert available but not utilized due to configuration`);
+      }
       //process golden ticket first
       if (adminCert && adminCert.certExp > Date.now() && adminCert?.goldenTicket === true) {
         /* prettier-ignore */ if (ShardeumFlags.VerboseLogs) console.log('Join req with admincert and golden ticket')
