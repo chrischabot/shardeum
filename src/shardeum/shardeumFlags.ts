@@ -103,6 +103,7 @@ interface ShardeumFlags {
   enableRIAccountsCache: boolean
   riAccountsCacheSize: number
   riAccountsDeleteBatchSize: number
+  networkAccountCacheDuration: number
 }
 
 export const ShardeumFlags: ShardeumFlags = {
@@ -236,6 +237,7 @@ export const ShardeumFlags: ShardeumFlags = {
     'GET /account/*',
     'GET /eth_getCode',
   ],
+  networkAccountCacheDuration: 600, // 10 minutes
 }
 
 export function updateShardeumFlag(key: string, value: string | number | boolean): void {

@@ -12,7 +12,7 @@ import {
   isValidAddress,
   toAscii,
   toBytes,
-  hexToBytes
+  hexToBytes,
 } from '@ethereumjs/util'
 import { ShardeumFlags, updateServicePoints, updateShardeumFlag } from './shardeum/shardeumFlags'
 import {
@@ -33,7 +33,14 @@ import { parse as parseUrl } from 'url'
 import got from 'got'
 import 'dotenv/config'
 import { ShardeumState, TransactionState } from './state'
-import { __ShardFunctions, nestedCountersInstance, ShardusTypes, DebugComplete, Shardus, DevSecurityLevel } from '@shardus/core'
+import {
+  __ShardFunctions,
+  nestedCountersInstance,
+  ShardusTypes,
+  DebugComplete,
+  Shardus,
+  DevSecurityLevel,
+} from '@shardus/core'
 import { ContractByteWrite } from './state/transactionState'
 import { version, devDependencies } from '../package.json'
 import {
@@ -148,6 +155,11 @@ let latestBlock = 0
 export const blocks: BlockMap = {}
 export const blocksByHash: { [hash: string]: number } = {}
 export const readableBlocks: { [blockNumber: number | string]: ShardeumBlockOverride } = {}
+
+//Cache network account
+let cachedNetworkAccount = null
+let cacheExpirationTimestamp = 0
+const CACHE_DURATION_SECONDS = ShardeumFlags.networkAccountCacheDuration // default 10 minutes
 
 export let genesisAccounts: string[] = []
 
@@ -2839,7 +2851,7 @@ async function generateAccessList(
       console.log('Immutable read accounts', readImmutableSet)
     }
 
-    const allCodeHash = new Map<string, CodeHashObj>
+    const allCodeHash = new Map<string, CodeHashObj>()
 
     for (const address of allInvolvedContracts) {
       const allKeys = new Set()
@@ -2865,14 +2877,14 @@ async function generateAccessList(
         const contractAddress = byteReads.contractAddress.toString()
         if (contractAddress !== address) continue
         //if (!allKeys.has(codeHash)) allKeys.add(codeHash)
-        if (!allCodeHash.has(contractAddress)) allCodeHash.set(contractAddress, {codeHash, contractAddress })
+        if (!allCodeHash.has(contractAddress)) allCodeHash.set(contractAddress, { codeHash, contractAddress })
       }
       for (const [, byteReads] of writtenAccounts.contractBytes) {
         const codeHash = bytesToHex(byteReads.codeHash)
         const contractAddress = byteReads.contractAddress.toString()
         if (contractAddress !== address) continue
         //if (!allKeys.has(codeHash)) allKeys.add(codeHash)
-        if (!allCodeHash.has(contractAddress)) allCodeHash.set(contractAddress, {codeHash, contractAddress })
+        if (!allCodeHash.has(contractAddress)) allCodeHash.set(contractAddress, { codeHash, contractAddress })
       }
 
       // const accessListItem = [address, Array.from(allKeys).map((key) => key)]
@@ -4440,7 +4452,11 @@ const shardusSetup = (): void => {
           //setting this may be useless seems like we never needed to do anything with codebytes in
           //getRelevantData before
           for (const codeHashObj of appData.codeHashes) {
-            const shardusAddr = toShardusAddressWithKey(codeHashObj.contractAddress, codeHashObj.codeHash, AccountType.ContractCode)
+            const shardusAddr = toShardusAddressWithKey(
+              codeHashObj.contractAddress,
+              codeHashObj.codeHash,
+              AccountType.ContractCode
+            )
             result.codeHashKeys.push(shardusAddr)
             shardusAddressToEVMAccountInfo.set(shardusAddr, {
               evmAddress: codeHashObj.codeHash,
@@ -4870,18 +4886,18 @@ const shardusSetup = (): void => {
             accountType: AccountType.ContractStorage,
           }
           /* prettier-ignore */ if (ShardeumFlags.VerboseLogs) console.log(`Creating new contract storage account key:${evmAccountID} in contract address ${wrappedEVMAccount.ethAddress}`)
-        }  else if (accountType === AccountType.ContractCode) {
+        } else if (accountType === AccountType.ContractCode) {
           //if(ShardeumFlags.createCodebytesFix){
-            wrappedEVMAccount = {
-              timestamp: 0,
-              codeHash: hexToBytes('0x' + evmAccountInfo.evmAddress),
-              codeByte: Buffer.from([]),
-              ethAddress: evmAccountInfo.evmAddress, // storage key
-              contractAddress: evmAccountInfo.contractAddress, // storage key
-              hash: '',
-              accountType: AccountType.ContractCode,
-            }     
-            /* prettier-ignore */ if (ShardeumFlags.VerboseLogs) console.log(`Creating new contract bytes account key:${evmAccountID} in contract address ${wrappedEVMAccount.ethAddress}`)
+          wrappedEVMAccount = {
+            timestamp: 0,
+            codeHash: hexToBytes('0x' + evmAccountInfo.evmAddress),
+            codeByte: Buffer.from([]),
+            ethAddress: evmAccountInfo.evmAddress, // storage key
+            contractAddress: evmAccountInfo.contractAddress, // storage key
+            hash: '',
+            accountType: AccountType.ContractCode,
+          }
+          /* prettier-ignore */ if (ShardeumFlags.VerboseLogs) console.log(`Creating new contract bytes account key:${evmAccountID} in contract address ${wrappedEVMAccount.ethAddress}`)
           //}
         } else {
           throw new Error(`getRelevantData: invalid account type ${accountType}`)
@@ -5537,7 +5553,7 @@ const shardusSetup = (): void => {
           }
           const pkClearance = shardus.getDevPublicKey(adminCert.sign.owner)
           // check for invalid signature for AdminCert
-          if(pkClearance == null){
+          if (pkClearance == null) {
             return {
               success: false,
               reason: 'Unauthorized! no getDevPublicKey defined',
@@ -5547,7 +5563,7 @@ const shardusSetup = (): void => {
           if (
             pkClearance &&
             (!shardus.crypto.verify(adminCert, pkClearance) ||
-            shardus.ensureKeySecurity(pkClearance, DevSecurityLevel.High) === false)
+              shardus.ensureKeySecurity(pkClearance, DevSecurityLevel.High) === false)
           ) {
             /* prettier-ignore */ nestedCountersInstance.countEvent('shardeum-mode', 'validateJoinRequest fail: !shardus.crypto.verify(adminCert, shardus.getDevPublicKeyMaxLevel())')
             return {
@@ -5599,7 +5615,7 @@ const shardusSetup = (): void => {
 
           const pkClearance = shardus.getDevPublicKey(adminCert.sign.owner)
           // check for invalid signature for AdminCert
-          if(pkClearance == null){
+          if (pkClearance == null) {
             return {
               success: false,
               reason: 'Unauthorized! no getDevPublicKey defined',
@@ -5609,7 +5625,7 @@ const shardusSetup = (): void => {
           if (
             pkClearance &&
             (!shardus.crypto.verify(adminCert, pkClearance) ||
-            shardus.ensureKeySecurity(pkClearance, DevSecurityLevel.High) === false)
+              shardus.ensureKeySecurity(pkClearance, DevSecurityLevel.High) === false)
           ) {
             // check for invalid signature for AdminCert
             /* prettier-ignore */ nestedCountersInstance.countEvent('shardeum-mode', 'validateJoinRequest fail: !shardus.crypto.verify(adminCert, shardus.getDevPublicKeyMaxLevel())')
@@ -5795,7 +5811,20 @@ const shardusSetup = (): void => {
       activeNodes: P2P.P2PTypes.Node[],
       mode: P2P.ModesTypes.Record['mode']
     ): Promise<boolean> {
-      const networkAccount = await fetchNetworkAccountFromArchiver()
+      const currentTime = Date.now()
+      let networkAccount = null
+      if (currentTime < cacheExpirationTimestamp && cachedNetworkAccount) {
+        // Use cached result if it's still valid
+        networkAccount = cachedNetworkAccount
+        /* prettier-ignore */ console.log(`isReadyToJoin using cached network account ${JSON.stringify(networkAccount)}`)
+      } else {
+        // Fetch new network account data
+        networkAccount = await fetchNetworkAccountFromArchiver()
+        // Update cache with new result
+        cachedNetworkAccount = networkAccount
+        cacheExpirationTimestamp = currentTime + CACHE_DURATION_SECONDS * 1000
+        /* prettier-ignore */ console.log(`isReadyToJoin fetched new network account ${JSON.stringify(networkAccount)}`)
+      }
 
       if (initialNetworkParamters && networkAccount) {
         if (
@@ -5806,8 +5835,7 @@ const shardusSetup = (): void => {
           )
         ) {
           const tag = 'version out-of-date; please update and restart'
-          const message =
-            'node version is out-of-date; please update node to latest version'
+          const message = 'node version is out-of-date; please update node to latest version'
           shardus.shutdownFromDapp(tag, message, false)
           return false
         }
