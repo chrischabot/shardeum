@@ -5816,14 +5816,14 @@ const shardusSetup = (): void => {
       if (currentTime < cacheExpirationTimestamp && cachedNetworkAccount) {
         // Use cached result if it's still valid
         networkAccount = cachedNetworkAccount
-        /* prettier-ignore */ console.log(`isReadyToJoin using cached network account ${JSON.stringify(networkAccount)}`)
+        /* prettier-ignore */ if (ShardeumFlags.VerboseLogs) console.log(`isReadyToJoin using cached network account ${JSON.stringify(networkAccount)}`)
       } else {
         // Fetch new network account data
         networkAccount = await fetchNetworkAccountFromArchiver()
         // Update cache with new result
         cachedNetworkAccount = networkAccount
         cacheExpirationTimestamp = currentTime + CACHE_DURATION_SECONDS * 1000
-        /* prettier-ignore */ console.log(`isReadyToJoin fetched new network account ${JSON.stringify(networkAccount)}`)
+        /* prettier-ignore */ if (ShardeumFlags.VerboseLogs) console.log(`isReadyToJoin fetched new network account ${JSON.stringify(networkAccount)}`)
       }
 
       if (initialNetworkParamters && networkAccount) {
