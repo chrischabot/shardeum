@@ -4680,7 +4680,7 @@ const shardusSetup = (): void => {
             }
           }
         }
-        if (ShardeumFlags.VerboseLogs) console.log('Running getRelevantData', wrappedEVMAccount)
+        if (ShardeumFlags.VerboseLogs) console.log('Running getRelevantData for internalTx', wrappedEVMAccount)
         return shardus.createWrappedResponse(
           accountId,
           accountCreated,
@@ -6199,7 +6199,7 @@ const shardusSetup = (): void => {
 
       // Waiting a bit here to make sure that shardus.getLatestCycles gives the latest cycle
       await sleep(1000)
-      const latestCycles: ShardusTypes.Cycle[] = shardus.getLatestCycles(10)
+      const latestCycles: ShardusTypes.Cycle[] = shardus.getLatestCycles(1)
       const currentCycle = latestCycles[0]
       if (!currentCycle) {
         /* prettier-ignore */ if (logFlags.error) console.log('No cycle records found', latestCycles)

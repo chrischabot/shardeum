@@ -132,7 +132,7 @@ export function clearOldPenaltyTxs(shardus: Shardus): void {
   const now = shardus.shardusGetTime()
   for (const [txId, tx] of penaltyTxsMap.entries()) {
     const cycleDuration = config.server.p2p.cycleDuration * 1000
-    if (now - tx.timestamp > 5 * cycleDuration) {
+    if (now - tx.timestamp > 20 * cycleDuration) {
       penaltyTxsMap.delete(txId)
     }
   }
@@ -176,45 +176,18 @@ export function validatePenaltyTX(tx: PenaltyTX, shardus: Shardus): { isValid: b
     return { isValid: false, reason: 'Invalid Violation data ' }
   }
 
-  // check if we have this penalty tx stored in the Map
+  // check if we have this penalty tx stored in the Map (only for execution nodes)
   const txId = generateTxId(tx)
-  const preRecordedfPenaltyTX = penaltyTxsMap.get(txId)
+  const preRecordedPenaltyTx = penaltyTxsMap.get(txId)
 
-  if (preRecordedfPenaltyTX == null) {
+  const executionGroup = shardus.getConsenusGroupForAccount(tx.reportedNodePublickKey)
+  const executionGroupIds = executionGroup.map((n) => n.id)
+  const isInExecutionGroup = executionGroupIds.includes(shardus.getNodeId())
+
+  if (preRecordedPenaltyTx == null && isInExecutionGroup) {
     return { isValid: false, reason: 'Penalty TX not found in penaltyTxsMap' }
   }
 
-  // validate node-left-early violation
-  // if (tx.violationType === ViolationType.LeftNetworkEarly) {
-  // const violationData = tx.violationData
-  // const latestCycles = shardus.getLatestCycles(10)
-  // const lostCycleRecord = latestCycles.find((record) => record.counter === violationData.nodeLostCycle)
-  // const droppedCycleRecord = latestCycles.find(
-  //   (record) => record.counter === violationData.nodeDroppedCycle
-  // )
-  //
-  // if (lostCycleRecord == null || droppedCycleRecord == null) {
-  //   /* prettier-ignore */
-  //   nestedCountersInstance.countEvent('shardeum-penalty', `validatePenaltyTX fail tx.violationData lostCycleRecord or droppedCycleRecord not found`)
-  //   /* prettier-ignore */
-  //   if (ShardeumFlags.VerboseLogs) console.log(`validatePenaltyTX fail tx.violationData lostCycleRecord or droppedCycleRecord not found`, tx)
-  //   return { isValid: false, reason: 'Invalid Violation data ' }
-  // }
-  // if (!lostCycleRecord.lost.includes(tx.reportedNodeId)) {
-  //   /* prettier-ignore */
-  //   nestedCountersInstance.countEvent('shardeum-penalty', `validatePenaltyTX fail tx.violationData node not found in lost`)
-  //   /* prettier-ignore */
-  //   if (ShardeumFlags.VerboseLogs) console.log(`validatePenaltyTX fail tx.violationData node not found in lost`, tx)
-  //   return { isValid: false, reason: 'Reported node not found in lost' }
-  // }
-  // if (!droppedCycleRecord.apoptosized.includes(tx.reportedNodeId)) {
-  //   /* prettier-ignore */
-  //   nestedCountersInstance.countEvent('shardeum-penalty', `validatePenaltyTX fail tx.violationData node not found in apoptosized`)
-  //   /* prettier-ignore */
-  //   if (ShardeumFlags.VerboseLogs) console.log(`validatePenaltyTX fail tx.violationData node not found in apoptosized`, tx)
-  //   return { isValid: false, reason: 'Reported node not found in apoptosized' }
-  // }
-  // }
   if (tx.timestamp <= 0) {
     /* prettier-ignore */
     nestedCountersInstance.countEvent('shardeum-penalty', `validatePenaltyTX fail tx.timestamp`)
@@ -272,7 +245,7 @@ export async function applyPenaltyTX(
     operatorAccount = wrappedStates[operatorShardusAddress].data as WrappedEVMAccount
   }
 
-
+  WrappedEVMAccountFunctions.fixDeserializedWrappedEVMAccount(operatorAccount)
 
   //TODO should we check if it was already penalized?
   const penaltyAmount = getPenaltyForViolation(tx, nodeAccount.stakeLock)
