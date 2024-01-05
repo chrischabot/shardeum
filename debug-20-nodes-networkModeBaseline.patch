@@ -6,9 +6,9 @@ index 238d2ad..22dbb5e 100644
      p2p: {
        cycleDuration: 60,
        minNodesToAllowTxs: 1, // to allow single node networks
--      minBaselineNodes: process.env.minBaselineNodes ? parseInt(process.env.minBaselineNodes) : 300,
+-      baselineNodes: process.env.baselineNodes ? parseInt(process.env.baselineNodes) : 300,
 -      minNodes: process.env.minNodes ? parseInt(process.env.minNodes) : 300,
-+      minBaselineNodes: process.env.minBaselineNodes ? parseInt(process.env.minBaselineNodes) : 20,
++      baselineNodes: process.env.baselineNodes ? parseInt(process.env.baselineNodes) : 20,
 +      minNodes: process.env.minNodes ? parseInt(process.env.minNodes) : 20,
        maxNodes: process.env.maxNodes ? parseInt(process.env.maxNodes) : 1100,
        maxJoinedPerCycle: 10,

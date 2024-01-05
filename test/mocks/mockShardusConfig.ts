@@ -32,7 +32,7 @@ const MOCK_SERVER_CONFIG = {
     gossipTimeout: 180,
     maxSeedNodes: 10,
     minNodesToAllowTxs: 1,
-    minBaselineNodes: 15,
+    baselineNodes: 15, 
     minNodes: 15,
     maxNodes: 30,
     seedNodeOffset: 4,
@@ -56,6 +56,7 @@ const MOCK_SERVER_CONFIG = {
     detectLostSyncing: true,
     scaleGroupLimit: 25,
     useSignaturesForAuth: false,
+    networkBaselineEnabled: false
   },
   ip: {
     externalIp: '0.0.0.0',
