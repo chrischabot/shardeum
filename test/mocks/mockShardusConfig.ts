@@ -55,8 +55,7 @@ const MOCK_SERVER_CONFIG = {
     experimentalSnapshot: true,
     detectLostSyncing: true,
     scaleGroupLimit: 25,
-    useSignaturesForAuth: false,
-    networkBaselineEnabled: false
+    useSignaturesForAuth: false
   },
   ip: {
     externalIp: '0.0.0.0',
