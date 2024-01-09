@@ -103,6 +103,7 @@ interface ShardeumFlags {
   enableRIAccountsCache: boolean
   riAccountsCacheSize: number
   riAccountsDeleteBatchSize: number
+  enableClaimRewardAdminCert: boolean
 }
 
 export const ShardeumFlags: ShardeumFlags = {
@@ -125,7 +126,7 @@ export const ShardeumFlags: ShardeumFlags = {
   DebugRestoreArchiveBatch: 2000,
   CheckNonce: true,
   txNoncePreCheck: true,
-  txBalancePreCheck: true,
+  txBalancePreCheck: false,
   autoGenerateAccessList: true,
   forwardGenesisAccounts: true,
   UseDBForAccounts: true,
@@ -236,6 +237,7 @@ export const ShardeumFlags: ShardeumFlags = {
     'GET /account/*',
     'GET /eth_getCode',
   ],
+  enableClaimRewardAdminCert: true,
 }
 
 export function updateShardeumFlag(key: string, value: string | number | boolean): void {
