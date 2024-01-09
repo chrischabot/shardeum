@@ -91,6 +91,10 @@ interface ShardeumFlags {
   lowStakePercent: number
   removeTokenBalanceCache: boolean
   enableNodeSlashing: boolean
+  enableLeftEarlySlashing: boolean
+  enableSyncTimeoutSlashing: boolean
+  enableRefutedNodeSlashing: boolean
+  enableLowStakeRemoval: boolean
   penaltyPercent: number
   receiptLogIndexFix: boolean
   blockedAtVerbose: boolean
@@ -238,7 +242,11 @@ export const ShardeumFlags: ShardeumFlags = {
     'GET /eth_getCode',
   ],
 
-  numberOfNodesToInjectPenaltyTx: 5
+  numberOfNodesToInjectPenaltyTx: 5,
+
+  enableSyncTimeoutSlashing: false,
+  enableRefutedNodeSlashing: false,
+  enableLowStakeRemoval: false,
 }
 
 export function updateShardeumFlag(key: string, value: string | number | boolean): void {

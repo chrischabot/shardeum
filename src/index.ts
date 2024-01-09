@@ -2367,7 +2367,7 @@ async function _transactionReceiptPass(
     if (isNodeAccount2(wrappedStates[tx.reportedNodePublickKey].data))
       nodeAccount = wrappedStates[tx.reportedNodePublickKey].data as NodeAccount2
 
-    if (isLowStake(nodeAccount)) {
+    if (ShardeumFlags.enableLowStakeRemoval && isLowStake(nodeAccount)) {
       if (ShardeumFlags.VerboseLogs) console.log(`isLowStake for nodeAccount ${nodeAccount.id}: true`, nodeAccount)
       const latestCycles = shardus.getLatestCycles()
       const currentCycle = latestCycles[0]
@@ -6226,7 +6226,7 @@ const shardusSetup = (): void => {
         nestedCountersInstance.countEvent('shardeum-staking', `node-deactivated: injectClaimRewardTx`)
         const result = await injectClaimRewardTxWithRetry(shardus, data)
         /* prettier-ignore */ if (logFlags.dapp_verbose) console.log('INJECTED_CLAIM_REWARD_TX', result)
-      } else if (eventType === 'node-left-early' && ShardeumFlags.enableNodeSlashing === true) {
+      } else if (eventType === 'node-left-early' && ShardeumFlags.enableNodeSlashing === true && ShardeumFlags.enableLeftEarlySlashing === true) {
         let nodeLostCycle
         let nodeDroppedCycle
         for (let i = 0; i < latestCycles.length; i++) {
@@ -6251,7 +6251,7 @@ const shardusSetup = (): void => {
           nestedCountersInstance.countEvent('shardeum-staking', `node-left-early: event skipped`)
           /* prettier-ignore */ if (logFlags.dapp_verbose) console.log(`Shardeum node-left-early event skipped`, data, nodeLostCycle, nodeDroppedCycle)
         }
-      } else if (eventType === 'node-sync-timeout' && ShardeumFlags.enableNodeSlashing === true) {
+      } else if (eventType === 'node-sync-timeout' && ShardeumFlags.enableNodeSlashing === true && ShardeumFlags.enableSyncTimeoutSlashing === true) {
         const violationData: SyncingTimeoutViolationData = {
           nodeLostCycle: data.cycleNumber,
           nodeDroppedTime: data.time,
@@ -6259,7 +6259,7 @@ const shardusSetup = (): void => {
         nestedCountersInstance.countEvent('shardeum-penalty', `node-sync-timeout: injectPenaltyTx`)
         const result = await PenaltyTx.injectPenaltyTX(shardus, data, violationData)
         /* prettier-ignore */ if (logFlags.dapp_verbose) console.log('INJECTED_PENALTY_TX', result)
-      } else if (eventType === 'node-refuted' && ShardeumFlags.enableNodeSlashing === true) {
+      } else if (eventType === 'node-refuted' && ShardeumFlags.enableNodeSlashing === true && ShardeumFlags.enableRefutedNodeSlashing === true) {
         let nodeRefutedCycle
         for (let i = 0; i < latestCycles.length; i++) {
           const cycle = latestCycles[i]
